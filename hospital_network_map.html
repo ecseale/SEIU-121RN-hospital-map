@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hospital Network Map</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+        }
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #1a1a1a;
+            --text-secondary: #666666;
+            --accent: #0066cc;
+            --border: #e0e0e0;
+        }
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --bg-primary: #1a1a1a;
+                --bg-secondary: #2d2d2d;
+                --text-primary: #ffffff;
+                --text-secondary: #cccccc;
+                --accent: #66b3ff;
+                --border: #404040;
+            }
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+        }
+        .header {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        .header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .header p {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+        }
+        #map {
+            flex: 1;
+            background: var(--bg-primary);
+        }
+        .leaflet-container {
+            background: var(--bg-primary) !important;
+        }
+        .leaflet-popup-content {
+            color: var(--text-primary);
+            font-size: 0.9rem;
+        }
+        .hospital-name {
+            font-weight: 600;
+            margin-bottom: 0.3rem;
+        }
+        .hospital-address {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Hospital Network Map</h1>
+            <p>29 healthcare facilities across Southern California</p>
+        </div>
+        <div id="map"></div>
+    </div>
+
+    <script>
+        // Map initialization
+        const map = L.map('map').setView([34.05, -118.24], 8);
+        
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 19
+        }).addTo(map);
+
+        // Hospital data
+        const hospitals = [
+            { name: 'Anaheim Regional Medical Center', lat: 33.8479136, lng: -117.934403, address: '1111 W La Palma Ave, Anaheim, CA 92801' },
+            { name: 'Barlow Respiratory Hospital', lat: 34.0757539, lng: -118.2481876, address: '2000 Stadium Way, Los Angeles, CA 90026' },
+            { name: 'Compassus Home Health', lat: 33.7964263, lng: -117.88997570000001, address: '2099 S State College Blvd, Anaheim, CA 92806' },
+            { name: 'Encino Hospital Medical Center', lat: 34.1570671, lng: -118.4869162, address: '16237 Ventura Blvd, Encino, CA 91436' },
+            { name: 'Garfield Medical Center', lat: 34.0675447, lng: -118.1231784, address: '525 N Garfield Ave, Monterey Park, CA 91754' },
+            { name: 'Greater El Monte Community Hospital', lat: 34.0480634, lng: -118.04314710000001, address: '1701 Santa Anita Ave, South El Monte, CA 91733' },
+            { name: 'Hollywood Presbyterian Medical Center', lat: 34.096344699999996, lng: -118.29045869999999, address: '1300 N Vermont Ave, Los Angeles, CA 90027' },
+            { name: 'John F. Kennedy Memorial Hospital', lat: 33.706497399999996, lng: -116.2360926, address: '47111 Monroe St, Indio, CA 92201' },
+            { name: 'Kaiser Permanente Moreno Valley Medical Center', lat: 33.896938999999996, lng: -117.18586189999999, address: '27300 Iris Ave, Moreno Valley, CA 92555' },
+            { name: 'Kindred Hospital – La Mirada', lat: 33.916351, lng: -118.01350959999998, address: '14900 Imperial Hwy, La Mirada, CA 90638' },
+            { name: 'Kindred Hospital – Los Angeles', lat: 33.9901677, lng: -118.37855669999999, address: '5525 W Slauson Ave, Los Angeles, CA 90056' },
+            { name: 'Kindred Hospital – Ontario', lat: 34.0692752, lng: -117.64221630000002, address: '550 N Monterey Ave, Ontario, CA 91764' },
+            { name: 'Kindred Hospital – Rancho', lat: 34.1035732, lng: -117.56633289999999, address: '10841 White Oak Ave, Rancho Cucamonga, CA 91730' },
+            { name: 'Kindred Hospital – Riverside', lat: 33.812502699999996, lng: -117.2223269, address: '2224 Medical Center Dr, Perris, CA 92571' },
+            { name: 'Kindred Hospital – South Bay', lat: 33.8901081, lng: -118.29743370000001, address: '1246 W 155th St, Gardena, CA 90247' },
+            { name: 'Los Robles Regional Medical Center', lat: 34.207695, lng: -118.88323539999999, address: '215 W Janss Rd, Thousand Oaks, CA 91360' },
+            { name: 'Monterey Park Hospital', lat: 34.049810799999996, lng: -118.1381455, address: '900 S Atlantic Blvd, Monterey Park, CA 91754' },
+            { name: 'Northridge Hospital Medical Center', lat: 34.2200135, lng: -118.5339183, address: '18300 Roscoe Blvd, Northridge, CA 91325' },
+            { name: 'Pacifica Hospital of the Valley', lat: 34.2400235, lng: -118.3964905, address: '9449 San Fernando Rd, Sun Valley, CA 91352' },
+            { name: 'Pomona Valley Hospital Medical Center', lat: 34.0776071, lng: -117.7509228, address: '1798 N Garey Ave, Pomona, CA 91767' },
+            { name: 'Providence St. Joseph Medical Center', lat: 34.1560974, lng: -118.32872630000001, address: '501 S Buena Vista St, Burbank, CA 91505' },
+            { name: 'Providence Tarzana Medical Center', lat: 34.1699552, lng: -118.53256169999999, address: '18321 Clark St, Tarzana, CA 91356' },
+            { name: 'Riverside Community Hospital', lat: 33.9767341, lng: -117.38192620000001, address: '4445 Magnolia Ave, Riverside, CA 92501' },
+            { name: 'San Dimas Community Hospital', lat: 34.0974723, lng: -117.834735, address: '1350 W Covina Blvd, San Dimas, CA 91773' },
+            { name: 'Sierra Vista Behavioral Health Center', lat: 34.1351691, lng: -117.211619, address: '3455 E Highland Ave, Highland, CA 92346' },
+            { name: 'Southern California Hospital at Hollywood', lat: 34.0964202, lng: -118.3252363, address: '6245 De Longpre Ave, Los Angeles, CA 90028' },
+            { name: 'Southern California Hospital at Van Nuys', lat: 34.177006399999996, lng: -118.44751950000001, address: '14433 Emelita St, Van Nuys, CA 91401' },
+            { name: 'St. John\'s Camarillo Hospital', lat: 34.2435525, lng: -119.0196582, address: '2309 Antonio Ave, Camarillo, CA 93010' },
+            { name: 'St. John\'s Regional Medical Center', lat: 34.1270386, lng: -117.27909299999999, address: '1500 N Waterman Ave, San Bernardino, CA 92404' }
+        ];
+
+        // Add markers
+        hospitals.forEach((hospital, index) => {
+            const marker = L.marker([hospital.lat, hospital.lng]).addTo(map);
+            marker.bindPopup(`
+                <div class="hospital-name">${hospital.name}</div>
+                <div class="hospital-address">${hospital.address}</div>
+            `);
+        });
+
+        // Fit bounds to show all markers
+        const group = new L.featureGroup(map._layers);
+        map.fitBounds(group.getBounds().pad(0.05));
+    </script>
+</body>
+</html>
